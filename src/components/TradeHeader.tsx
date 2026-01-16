@@ -1,13 +1,20 @@
 import { RefreshCw, History, Settings } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 export function TradeHeader() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   return (
     <header className="border-b border-border/30 bg-card/30 backdrop-blur-md">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <div 
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => navigate('/')}
+          >
             <div className={cn(
               'h-10 w-10 rounded-lg flex items-center justify-center',
               'bg-primary/20 border border-primary/30'
@@ -30,10 +37,15 @@ export function TradeHeader() {
             )}>
               <RefreshCw className="h-5 w-5" />
             </button>
-            <button className={cn(
-              'p-2 rounded-lg transition-all duration-200',
-              'hover:bg-secondary text-muted-foreground hover:text-foreground'
-            )}>
+            <button 
+              onClick={() => navigate('/my-trades')}
+              className={cn(
+                'p-2 rounded-lg transition-all duration-200',
+                location.pathname === '/my-trades'
+                  ? 'bg-primary/20 text-primary'
+                  : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
+              )}
+            >
               <History className="h-5 w-5" />
             </button>
             <button className={cn(
