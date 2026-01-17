@@ -3,8 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { TradeHeader } from '@/components/TradeHeader';
 import { TradeCard } from '@/components/TradeCard';
+import { TradeDetailModal } from '@/components/TradeDetailModal';
 import { mockTrades } from '@/data/mockTrades';
+import { Trade } from '@/types/trade';
 import { ArrowLeft, Package, Send, Inbox } from 'lucide-react';
+import { toast } from 'sonner';
 
 type TabType = 'all' | 'initiated' | 'received';
 
@@ -17,11 +20,33 @@ const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
 const MyTrades = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const filteredTrades = mockTrades.filter(trade => {
     if (activeTab === 'all') return true;
     return trade.type === activeTab;
   });
+
+  const handleTradeClick = (trade: Trade) => {
+    setSelectedTrade(trade);
+    setModalOpen(true);
+  };
+
+  const handleAccept = (trade: Trade) => {
+    toast.success(`已接受与 ${trade.partner.name} 的交易`);
+    setModalOpen(false);
+  };
+
+  const handleReject = (trade: Trade) => {
+    toast.error(`已拒绝与 ${trade.partner.name} 的交易`);
+    setModalOpen(false);
+  };
+
+  const handleCancel = (trade: Trade) => {
+    toast.info(`已取消与 ${trade.partner.name} 的交易`);
+    setModalOpen(false);
+  };
 
   const counts = {
     all: mockTrades.length,
@@ -118,7 +143,11 @@ const MyTrades = () => {
         <div className="space-y-4">
           {filteredTrades.length > 0 ? (
             filteredTrades.map(trade => (
-              <TradeCard key={trade.id} trade={trade} />
+              <TradeCard 
+                key={trade.id} 
+                trade={trade} 
+                onClick={() => handleTradeClick(trade)}
+              />
             ))
           ) : (
             <div className={cn(
@@ -130,6 +159,16 @@ const MyTrades = () => {
             </div>
           )}
         </div>
+
+        {/* Trade Detail Modal */}
+        <TradeDetailModal
+          trade={selectedTrade}
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          onAccept={handleAccept}
+          onReject={handleReject}
+          onCancel={handleCancel}
+        />
       </main>
     </div>
   );
