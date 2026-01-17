@@ -6,10 +6,11 @@ import { TradeCard } from '@/components/TradeCard';
 import { TradeDetailModal } from '@/components/TradeDetailModal';
 import { mockTrades } from '@/data/mockTrades';
 import { Trade } from '@/types/trade';
-import { ArrowLeft, Package, Send, Inbox } from 'lucide-react';
+import { ArrowLeft, Package, Send, Inbox, Clock, CheckCircle, XCircle, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 type TabType = 'all' | 'initiated' | 'received';
+type StatusFilter = 'all' | 'pending' | 'completed' | 'cancelled';
 
 const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
   { id: 'all', label: '全部', icon: Package },
@@ -17,15 +18,24 @@ const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
   { id: 'received', label: '我收到的', icon: Inbox },
 ];
 
+const statusFilters: { id: StatusFilter; label: string; icon: React.ElementType; color: string }[] = [
+  { id: 'all', label: '全部状态', icon: Filter, color: 'text-foreground' },
+  { id: 'pending', label: '进行中', icon: Clock, color: 'text-accent' },
+  { id: 'completed', label: '已完成', icon: CheckCircle, color: 'text-rarity-uncommon' },
+  { id: 'cancelled', label: '已取消', icon: XCircle, color: 'text-destructive' },
+];
+
 const MyTrades = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const filteredTrades = mockTrades.filter(trade => {
-    if (activeTab === 'all') return true;
-    return trade.type === activeTab;
+    const matchesTab = activeTab === 'all' || trade.type === activeTab;
+    const matchesStatus = statusFilter === 'all' || trade.status === statusFilter;
+    return matchesTab && matchesStatus;
   });
 
   const handleTradeClick = (trade: Trade) => {
@@ -110,28 +120,74 @@ const MyTrades = () => {
           })}
         </div>
 
+        {/* Status Filter */}
+        <div className="flex items-center gap-2 mb-6 flex-wrap">
+          <span className="text-sm text-muted-foreground mr-1">状态筛选:</span>
+          {statusFilters.map(filter => {
+            const Icon = filter.icon;
+            const isActive = statusFilter === filter.id;
+            const count = filter.id === 'all' 
+              ? mockTrades.length 
+              : mockTrades.filter(t => t.status === filter.id).length;
+            return (
+              <button
+                key={filter.id}
+                onClick={() => setStatusFilter(filter.id)}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
+                  'border transition-all duration-200',
+                  isActive
+                    ? cn('bg-secondary border-border', filter.color)
+                    : 'bg-transparent border-border/50 text-muted-foreground hover:border-border hover:text-foreground'
+                )}
+              >
+                <Icon className="h-3 w-3" />
+                {filter.label}
+                <span className={cn(
+                  'ml-0.5 px-1.5 py-0.5 rounded-full text-[10px]',
+                  isActive ? 'bg-background/50' : 'bg-muted'
+                )}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className={cn(
-            'p-4 rounded-xl text-center',
-            'bg-card/50 border border-border/50'
-          )}>
+            'p-4 rounded-xl text-center cursor-pointer transition-all',
+            'bg-card/50 border border-border/50',
+            'hover:bg-card/70 hover:border-primary/30',
+            statusFilter === 'all' && 'ring-2 ring-primary/50'
+          )}
+          onClick={() => setStatusFilter('all')}
+          >
             <p className="text-2xl font-display font-bold text-primary">{counts.all}</p>
             <p className="text-xs text-muted-foreground">总交易</p>
           </div>
           <div className={cn(
-            'p-4 rounded-xl text-center',
-            'bg-card/50 border border-border/50'
-          )}>
+            'p-4 rounded-xl text-center cursor-pointer transition-all',
+            'bg-card/50 border border-border/50',
+            'hover:bg-card/70 hover:border-rarity-uncommon/30',
+            statusFilter === 'completed' && 'ring-2 ring-rarity-uncommon/50'
+          )}
+          onClick={() => setStatusFilter('completed')}
+          >
             <p className="text-2xl font-display font-bold text-rarity-uncommon">
               {mockTrades.filter(t => t.status === 'completed').length}
             </p>
             <p className="text-xs text-muted-foreground">已完成</p>
           </div>
           <div className={cn(
-            'p-4 rounded-xl text-center',
-            'bg-card/50 border border-border/50'
-          )}>
+            'p-4 rounded-xl text-center cursor-pointer transition-all',
+            'bg-card/50 border border-border/50',
+            'hover:bg-card/70 hover:border-accent/30',
+            statusFilter === 'pending' && 'ring-2 ring-accent/50'
+          )}
+          onClick={() => setStatusFilter('pending')}
+          >
             <p className="text-2xl font-display font-bold text-accent">
               {mockTrades.filter(t => t.status === 'pending').length}
             </p>
